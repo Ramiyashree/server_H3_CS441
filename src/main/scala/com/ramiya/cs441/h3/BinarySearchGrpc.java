@@ -58,7 +58,11 @@ public class BinarySearchGrpc {
 
             fullObject = s3Client.getObject(new GetObjectRequest(bucketName, key));
 
-            InputStream inputStream = fullObject.getObjectContent();
+           InputStream inputStream = fullObject.getObjectContent();
+
+            String textFile = fullObject.getObjectContent().toString();
+
+            System.out.println("textfile" + textFile);
 
             String text = new BufferedReader(
                     new InputStreamReader(inputStream, StandardCharsets.UTF_8))
@@ -83,6 +87,7 @@ public class BinarySearchGrpc {
 
         int count = lines.split("\n").length - 1;
 
+        System.out.print("lines" + count);
         String[] stringLines = lines.split("\n");
 
         int start = 0;

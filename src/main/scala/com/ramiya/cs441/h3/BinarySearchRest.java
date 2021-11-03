@@ -1,12 +1,8 @@
 package com.ramiya.cs441.h3;
-import java.io.*;
-import java.io.File;
-import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
-import java.sql.Time;
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import java.time.LocalTime;
@@ -18,12 +14,10 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
-import java.math.BigInteger;
-import java.security.MessageDigest;
+
 import java.security.NoSuchAlgorithmException;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
@@ -36,14 +30,14 @@ public class BinarySearchRest {
 //        IntervalTime(time, dT);
 //    }
 
-    public static StringBuilder IntervalTime(LocalTime time, LocalTime dT) throws IOException {
+    public static List<byte[]> IntervalTime(LocalTime time, LocalTime dT) throws IOException {
 
         String bucketName = "logfilegrpcrest";
         String key = "LogFileGenerator.2021-10-18.log";
 
         System.out.println("inside binarysearch" + time + " " + dT);
         StringBuilder sb = new StringBuilder();
-
+        List<byte[]> HashedMessages = new ArrayList<byte[]>();
 
         S3Object fullObject = null, objectPortion = null, headerOverrideObject = null;
 
@@ -60,19 +54,22 @@ public class BinarySearchRest {
 
             InputStream inputStream = fullObject.getObjectContent();
 
+            String textFile = fullObject.getObjectContent().toString();
+
+
             String text = new BufferedReader(
                     new InputStreamReader(inputStream, StandardCharsets.UTF_8))
                     .lines()
                     .collect(Collectors.joining("\n"));
-            //59
+
             LocalTime lowerIntervalTime = time.plusHours(dT.getHour()).plusMinutes(dT.getMinute()).plusSeconds(dT.getSecond()).plusNanos(dT.getNano());
             System.out.println("lower" + lowerIntervalTime);
 
-            //57
             LocalTime upperIntervalTime = time.minusHours(dT.getHour()).minusMinutes(dT.getMinute()).minusSeconds(dT.getSecond()).minusNanos(dT.getNano());
             System.out.println("upper" + upperIntervalTime);
 
             int startInterval = findTimesInInterval(text, upperIntervalTime, true);
+
             System.out.println("upperIndex" + startInterval);
 
                 int endInterval = findTimesInInterval(text, lowerIntervalTime, false);
@@ -90,12 +87,10 @@ public class BinarySearchRest {
                         MessageDigest md = MessageDigest.getInstance("MD5");
                         byte[] theMD5digest = md.digest(bytesOfMessage);
                         sb.append(theMD5digest);
-                        sb.append("\n");
+                        HashedMessages.add(theMD5digest);
                     }
-                    System.out.println("M5HASHMESSAGE" + sb);
+                    System.out.println("M5HASHMESSAGE" + HashedMessages);
                 }
-
-
         } catch (AmazonServiceException e) {
             // The call was transmitted successfully, but Amazon S3 couldn't process
             // it, so it returned an error response.
@@ -107,7 +102,7 @@ public class BinarySearchRest {
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-        return sb;
+        return HashedMessages;
     }
 
     private static int findTimesInInterval(String lines, LocalTime time, boolean isUpper) throws IOException {
