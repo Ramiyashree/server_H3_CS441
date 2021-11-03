@@ -41,21 +41,23 @@ class restServer extends RequestHandler[util.Map[String, String], APIGatewayProx
 
     val result = BinarySearchRest.IntervalTime(time, dT)
 
-    val response = ResultMessage(result.toString, Map("Content-Type" -> "application/json"))
+
+      val response = ResultMessage(result.toString, Map("Content-Type" -> "application/json"))
+      logger.log("response length" + result.toString.split(",").length)
 
     val jSonresponse = gSon.toJson(response.body)
-    logger.log("bosy message length" + jSonresponse.size)
-      logger.log("bosy message" + jSonresponse)
 
-     new APIGatewayProxyResponseEvent()
+
+      new APIGatewayProxyResponseEvent()
       .withStatusCode(response.statusCode)
       .withHeaders(response.getHeaders)
       .withBody(jSonresponse)
 
   }
 
-  case class ResultMessage(body : String, headers: Map[String, String], statusCode : Int = 200) {
+  case class ResultMessage(body : String, headers: Map[String, String]) {
     def getHeaders: java.util.Map[String, String] = headers.asJava
+    val statusCode : Int = if(body.split(",").length == 1) 400 else 200
   }
 
   }
