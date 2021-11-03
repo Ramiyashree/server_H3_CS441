@@ -33,8 +33,6 @@ class gRPCServer extends RequestHandler[APIGatewayProxyRequestEvent, APIGatewayP
     print(s"result: ${result.result}")
     val output = Base64.getEncoder.encodeToString(result.toByteArray)
 
-    //val out = Base64.getEncoder.encodeToString("user:pass".getBytes(StandardCharsets.UTF_8))
-
     logger.log(s"outaputallnew: $output" + "\n")
 
     // Send the response
