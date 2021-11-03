@@ -1,5 +1,4 @@
 package com.ramiya.cs441.h3;
-
 import java.io.*;
 import java.io.File;
 import java.nio.CharBuffer;
@@ -30,19 +29,21 @@ import java.io.InputStreamReader;
 
 public class BinarySearchRest {
 
-    public static void main(String[] args) throws Exception {
+//    public static void main(String[] args) throws Exception {
+//
+//        LocalTime time = LocalTime.parse("17:12:22.908");
+//        LocalTime dT = LocalTime.parse("00:00:01.00");
+//        IntervalTime(time, dT);
+//    }
 
-        LocalTime time = LocalTime.parse("17:12:57.251");
-        LocalTime dT = LocalTime.parse("00:00:01.00");
-        IntervalTime(time, dT);
-    }
-
-    public static boolean IntervalTime(LocalTime time, LocalTime dT) throws IOException {
+    public static StringBuilder IntervalTime(LocalTime time, LocalTime dT) throws IOException {
 
         String bucketName = "logfilegrpcrest";
         String key = "LogFileGenerator.2021-10-18.log";
 
         System.out.println("inside binarysearch" + time + " " + dT);
+        StringBuilder sb = new StringBuilder();
+
 
         S3Object fullObject = null, objectPortion = null, headerOverrideObject = null;
 
@@ -73,22 +74,27 @@ public class BinarySearchRest {
 
             int startInterval = findTimesInInterval(text, upperIntervalTime, true);
             System.out.println("upperIndex" + startInterval);
-            int endInterval = findTimesInInterval(text, lowerIntervalTime, false);
-            System.out.println("endIndex" + endInterval);
 
-            int count = endInterval - startInterval;
-            String[] stringIntervalLines = text.split("\n");
+                int endInterval = findTimesInInterval(text, lowerIntervalTime, false);
+                System.out.println("endIndex" + endInterval);
 
-            StringBuilder sb = new StringBuilder();
+                int count = endInterval - startInterval;
+                String[] stringIntervalLines = text.split("\n");
 
-            for(int i = startInterval; i <= endInterval; i++){
-                byte[] bytesOfMessage = stringIntervalLines[i].getBytes("UTF-8");
-                MessageDigest md = MessageDigest.getInstance("MD5");
-                byte[] theMD5digest = md.digest(bytesOfMessage);
-                sb.append(theMD5digest);
-                sb.append("\n");
-            }
-            System.out.println("M5HASHMESSAGE" + sb);
+
+                if(startInterval == 1 && endInterval == 0)
+                    System.out.println("nointervalmessages");
+                else {
+                    for (int i = startInterval; i < endInterval; i++) {
+                        byte[] bytesOfMessage = stringIntervalLines[i].getBytes("UTF-8");
+                        MessageDigest md = MessageDigest.getInstance("MD5");
+                        byte[] theMD5digest = md.digest(bytesOfMessage);
+                        sb.append(theMD5digest);
+                        sb.append("\n");
+                    }
+                    System.out.println("M5HASHMESSAGE" + sb);
+                }
+
 
         } catch (AmazonServiceException e) {
             // The call was transmitted successfully, but Amazon S3 couldn't process
@@ -101,7 +107,7 @@ public class BinarySearchRest {
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-        return false;
+        return sb;
     }
 
     private static int findTimesInInterval(String lines, LocalTime time, boolean isUpper) throws IOException {
