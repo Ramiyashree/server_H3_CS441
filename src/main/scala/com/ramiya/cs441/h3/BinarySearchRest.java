@@ -6,6 +6,8 @@ import java.util.List;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import java.time.LocalTime;
+import java.util.regex.Pattern;
+
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.SdkClientException;
@@ -14,6 +16,8 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 import java.security.NoSuchAlgorithmException;
 
@@ -23,19 +27,22 @@ import java.io.InputStreamReader;
 
 public class BinarySearchRest {
 
-//    public static void main(String[] args) throws Exception {
-//
-//        LocalTime time = LocalTime.parse("17:12:22.908");
-//        LocalTime dT = LocalTime.parse("00:00:01.00");
-//        IntervalTime(time, dT);
-//    }
+    public static void main(String[] args) throws Exception {
+
+        LocalTime time = LocalTime.parse("17:12:58.745");
+        LocalTime dT = LocalTime.parse("00:00:01.00");
+        IntervalTime(time, dT);
+    }
 
     public static List<byte[]> IntervalTime(LocalTime time, LocalTime dT) throws IOException {
 
         String bucketName = "logfilegrpcrest";
         String key = "LogFileGenerator.2021-10-18.log";
 
-        System.out.println("inside binarysearch" + time + " " + dT);
+        Config conf = ConfigFactory.load("application.conf");
+        String pattern = conf.getString("serverConfig.pattern");
+        System.out.println("pattern" + pattern);
+
         StringBuilder sb = new StringBuilder();
         List<byte[]> HashedMessages = new ArrayList<byte[]>();
 
@@ -78,16 +85,19 @@ public class BinarySearchRest {
                 int count = endInterval - startInterval;
                 String[] stringIntervalLines = text.split("\n");
 
-
-                if(startInterval == 1 && endInterval == 0)
+            if(startInterval == 1 && endInterval == 0)
                     System.out.println("nointervalmessages");
                 else {
                     for (int i = startInterval; i < endInterval; i++) {
-                        byte[] bytesOfMessage = stringIntervalLines[i].getBytes("UTF-8");
-                        MessageDigest md = MessageDigest.getInstance("MD5");
-                        byte[] theMD5digest = md.digest(bytesOfMessage);
-                        sb.append(theMD5digest);
-                        HashedMessages.add(theMD5digest);
+                        int n = stringIntervalLines[i].split(" ").length;
+                       System.out.println(stringIntervalLines[i].split(" ")[n-1]);
+                        if(Pattern.matches(pattern, stringIntervalLines[i].split(" ")[n - 1])){
+                            byte[] bytesOfMessage = stringIntervalLines[i].split(" ")[n - 1].getBytes("UTF-8");
+                            MessageDigest md = MessageDigest.getInstance("MD5");
+                            byte[] theMD5digest = md.digest(bytesOfMessage);
+                            sb.append(theMD5digest);
+                            HashedMessages.add(theMD5digest);
+                        }
                     }
                     System.out.println("M5HASHMESSAGE" + HashedMessages);
                 }
@@ -121,9 +131,7 @@ public class BinarySearchRest {
             middle = (start + end) / 2;
 
             String strMidTime = stringLines[middle].split(" ")[0];
-
             LocalTime midTime = LocalTime.parse(strMidTime);
-
             int comparison = midTime.compareTo(time);
 
             if (comparison == 0) {

@@ -47,12 +47,10 @@ class restServer extends RequestHandler[util.Map[String, String], APIGatewayProx
 
     val jSonresponse = gSon.toJson(response.body)
 
-
       new APIGatewayProxyResponseEvent()
       .withStatusCode(response.statusCode)
       .withHeaders(response.getHeaders)
       .withBody(jSonresponse)
-
   }
 
   case class ResultMessage(body : String, headers: Map[String, String]) {
